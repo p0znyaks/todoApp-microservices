@@ -4,16 +4,15 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Getter
-@Setter
+@Builder
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Task {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include // чтобы только по id
+    //@EqualsAndHashCode.Include // чтобы только по id
     private Long id;
 
     @Column(nullable = false)
@@ -26,15 +25,6 @@ public class Task {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @ToString.Exclude
     private User user;
-
-    @Override
-    public String toString() {
-        return "Task{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", description='" + description + '\'' +
-                ", completed=" + completed +
-                '}';
-    }
 }

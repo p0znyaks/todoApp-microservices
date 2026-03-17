@@ -1,8 +1,7 @@
-package com.p0znyaks.todo_app.mappers;
+package com.p0znyaks.todo_app.mapper;
 
 import com.p0znyaks.todo_app.dto.TaskRequest;
 import com.p0znyaks.todo_app.dto.TaskResponse;
-
 import com.p0znyaks.todo_app.entity.Task;
 import org.springframework.stereotype.Component;
 

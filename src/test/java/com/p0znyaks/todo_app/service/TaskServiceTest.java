@@ -6,7 +6,7 @@ import com.p0znyaks.todo_app.entity.Task;
 import com.p0znyaks.todo_app.entity.User;
 import com.p0znyaks.todo_app.exception.TaskNotFoundException;
 import com.p0znyaks.todo_app.exception.UserNotFoundException;
-import com.p0znyaks.todo_app.mappers.TaskMapper;
+import com.p0znyaks.todo_app.mapper.TaskMapper;
 import com.p0znyaks.todo_app.repository.TaskRepository;
 import com.p0znyaks.todo_app.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,12 +16,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-
 import java.util.ArrayList;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -58,32 +58,33 @@ class TaskServiceTest {
     void getTaskByUserId_ReturnTask_WhenTaskExists() {
         TaskResponse expectedResponse = new TaskResponse(1L, "Test Task", "Test Description", false);
 
-        when(taskRepository.findByUserIdAndId(userId, taskId)).thenReturn(Optional.of(testTask));
+        when(taskRepository.findById(userId, taskId)).thenReturn(Optional.of(testTask));
         when(taskMapper.convertToResponse(testTask)).thenReturn(expectedResponse);
 
-        TaskResponse result = taskService.getTaskByUserId(userId, taskId);
+        TaskResponse result = assertDoesNotThrow(() -> taskService.getTask(taskId));
 
         assertThat(result).isNotNull();
-        assertThat(result.getId()).isEqualTo(taskId);
-        assertThat(result.getTitle()).isEqualTo(testTask.getTitle());
-        assertThat(result.getDescription()).isEqualTo(testTask.getDescription());
-        assertThat(result.isCompleted()).isEqualTo(testTask.isCompleted());
+        resultEqualsToTask(result);
+
+        //Где verify
     }
 
     @Test
     void getTaskByUserId_ShouldThrownException_WhenTaskNotFound() {
         Long nonExistentUserId = 0L;
 
-        when(taskRepository.findByUserIdAndId(nonExistentUserId, taskId)).thenReturn(Optional.empty());
+        when(taskRepository.findById(nonExistentUserId, taskId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> taskService.getTaskByUserId(nonExistentUserId, taskId))
+        assertThatThrownBy(() -> taskService.getTask(taskId))
                 .isInstanceOf(TaskNotFoundException.class)
                 .hasMessageContaining("Task not found");
+
+        verify(taskRepository).findById(nonExistentUserId, taskId);
     }
 
     @Test
     void createTask_ShouldSaveTask_WhenUserExists() {
-        TaskRequest testRequest = new TaskRequest("New Task", "New Desc", false);
+        TaskRequest testRequest = TaskBuilder.taskRequest().title("Updated Task").build();
 
         Task taskToSave = new Task();
         taskToSave.setTitle(testRequest.getTitle());
@@ -95,7 +96,7 @@ class TaskServiceTest {
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
         when(taskMapper.convertToEntity(testRequest)).thenReturn(taskToSave);
-        when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
+        when(taskRepository.save(taskToSave)).thenReturn(savedTask);
         when(taskMapper.convertToResponse(savedTask)).thenReturn(new TaskResponse(
                 1L, taskToSave.getTitle(), taskToSave.getDescription(), taskToSave.isCompleted()
         ));
@@ -105,13 +106,14 @@ class TaskServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getTitle()).isEqualTo(testRequest.getTitle());
 
+        //Никаких any, кроме тестов, проверяющих негативный сценарий, где не важно, какой арг. передан
         verify(taskRepository).save(any(Task.class));
     }
 
     @Test
     void createTask_ShouldThrownException_WhenUserNotFound() {
         Long nonExistentUserId = 0L;
-        TaskRequest testRequest = new TaskRequest("New Task", "New Desc", false);
+        TaskRequest testRequest = TaskBuilder.taskRequest().build();
 
         when(userRepository.findById(nonExistentUserId)).thenReturn(Optional.empty());
 
@@ -129,14 +131,25 @@ class TaskServiceTest {
         Task updatedTask = new Task(1L, "Updated Task", "Updated Desc", true, testUser);
         TaskResponse taskResponse = new TaskResponse(1L, "Updated Task", "Updated Desc", true);
 
-        when(taskRepository.findByUserIdAndId(userId, taskId)).thenReturn(Optional.of(testTask));
-        doNothing().when(taskMapper).updateEntityFromRequest(testRequest, testTask);
-        when(taskRepository.save(any(Task.class))).thenReturn(updatedTask);
+        when(taskRepository.findById(userId, taskId)).thenReturn(Optional.of(testTask));
+        doAnswer(invocationOnMock -> {
+            testTask.setTitle(testRequest.getTitle());
+            return null;
+        }).when(taskMapper).updateEntityFromRequest(testRequest, testTask);
+        when(taskRepository.save(testTask)).thenReturn(updatedTask);
         when(taskMapper.convertToResponse(updatedTask)).thenReturn(taskResponse);
+
         TaskResponse result = taskService.updateTask(userId, taskId, testRequest);
 
         assertThat(result).isNotNull();
         assertThat(result.getTitle()).isEqualTo(testRequest.getTitle());
         assertThat(result.isCompleted()).isEqualTo(testRequest.isCompleted());
+    }
+
+    private void resultEqualsToTask(TaskResponse result) {
+        assertThat(result.getId()).isEqualTo(taskId);
+        assertThat(result.getTitle()).isEqualTo(testTask.getTitle());
+        assertThat(result.getDescription()).isEqualTo(testTask.getDescription());
+        assertThat(result.isCompleted()).isEqualTo(testTask.isCompleted());
     }
 }

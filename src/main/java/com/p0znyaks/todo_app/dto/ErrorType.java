@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,11 +23,11 @@ public enum ErrorType {
         return httpStatus.value();
     }
 
-    public String formatMessage(Object ...args) {
-        return MessageFormat.format(messageTemplate, args);
+    public String getMessage(Exception ...args) {
+        return MessageFormat.format(messageTemplate, Arrays.toString(args));
     }
 
-    public Map<String, String> formatValidationMessage(MethodArgumentNotValidException ex) {
+    public Map<String, String> getValidationMessage(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
 
         ex.getBindingResult().getFieldErrors().forEach(err -> errors

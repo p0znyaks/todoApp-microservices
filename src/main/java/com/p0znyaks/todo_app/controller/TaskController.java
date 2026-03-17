@@ -13,26 +13,26 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/users/{userId}/tasks")
+@RequestMapping("/tasks")
 @RequiredArgsConstructor
 public class TaskController {
     private final TaskService taskService;
 
     @GetMapping
-    public List<TaskResponse> getTasksByUser(@PathVariable Long userId) {
-        return taskService.getTasksByUserId(userId);
+    public List<TaskResponse> getTasks() {
+        return taskService.getTasks();
     }
 
     @GetMapping("/{taskId}")
-    public TaskResponse getTaskByUser(@PathVariable Long userId, @PathVariable Long taskId) {
-        return taskService.getTaskByUserId(userId, taskId);
+    public TaskResponse getTask(@PathVariable Long taskId) {
+        return taskService.getTask(taskId);
     }
 
     @PostMapping
-    public ResponseEntity<TaskResponse> createTask(@PathVariable Long userId, @Valid @RequestBody TaskRequest request) {
-        TaskResponse createdTask = taskService.createTask(userId, request);
+    public ResponseEntity<TaskResponse> createTask(@Valid @RequestBody TaskRequest request) {
+        TaskResponse createdTask = taskService.createTask(request);
         return ResponseEntity
-                .created(URI.create("/api/users" + userId + "/tasks" ))
+                .created(URI.create("/tasks"))
                 .body(createdTask);
     }
 
@@ -44,6 +44,6 @@ public class TaskController {
     @DeleteMapping("/{taskId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteTask(@PathVariable Long userId, @PathVariable Long taskId) {
-        taskService.deleteTask(userId, taskId);
+        taskService.deleteTask(taskId);
     }
 }

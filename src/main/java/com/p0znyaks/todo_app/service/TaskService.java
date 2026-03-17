@@ -6,7 +6,7 @@ import com.p0znyaks.todo_app.entity.Task;
 import com.p0znyaks.todo_app.entity.User;
 import com.p0znyaks.todo_app.exception.TaskNotFoundException;
 import com.p0znyaks.todo_app.exception.UserNotFoundException;
-import com.p0znyaks.todo_app.mappers.TaskMapper;
+import com.p0znyaks.todo_app.mapper.TaskMapper;
 import com.p0znyaks.todo_app.repository.TaskRepository;
 import com.p0znyaks.todo_app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,12 +18,28 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class TaskService {
+
+//    public TaskMapper getSingleton() {
+//        if (taskMapper == null) {
+//            synchronized (this) {
+//                if (taskMapper == null) {
+//                    taskMapper = new TaskMapper();
+//                }
+//            }
+//        }
+//
+//        return taskMapper;
+//    }
+//    private volatile TaskMapper taskMapper;
+
+    // TODO через сессию
+//    private final PermissionValidationService permissionValidationService;
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final TaskMapper taskMapper;
 
-    public List<TaskResponse> getTasksByUserId(Long userId) {
-        if(!userRepository.existsById(userId)) {
+    public List<TaskResponse> getTasks() {
+        if (!userRepository.existsById(userId)) {
             throw new UserNotFoundException();
         }
 
@@ -33,9 +49,11 @@ public class TaskService {
                 .collect(Collectors.toList());
     }
 
-    public TaskResponse getTaskByUserId(Long userId, Long taskId) {
-        Task task = taskRepository.findByUserIdAndId(userId, taskId)
+    //    @Transactional(readOnly = true)
+    public TaskResponse getTask(Long taskId) {
+        Task task = taskRepository.findById(taskId)
                 .orElseThrow(TaskNotFoundException::new);
+//        permissionValidationService.checkIfHasAccess(task);
 
         return taskMapper.convertToResponse(task);
     }
@@ -51,7 +69,7 @@ public class TaskService {
     }
 
     public TaskResponse updateTask(Long userId, Long taskId, TaskRequest request) {
-        Task task = taskRepository.findByUserIdAndId(userId, taskId)
+        Task task = taskRepository.findById(userId, taskId)
                 .orElseThrow(TaskNotFoundException::new);
 
         taskMapper.updateEntityFromRequest(request, task);
@@ -59,10 +77,11 @@ public class TaskService {
         return taskMapper.convertToResponse(taskRepository.save(task));
     }
 
-    public void deleteTask(Long userId, Long taskId) {
-        Task task = taskRepository.findByUserIdAndId(userId, taskId)
-                .orElseThrow(TaskNotFoundException::new);
+    public void deleteTask(Long taskId) {
+        if (!taskRepository.existsById(taskId)) {
+            throw new TaskNotFoundException();
+        }
 
-        taskRepository.delete(task);
+        taskRepository.deleteById(taskId);
     }
 }

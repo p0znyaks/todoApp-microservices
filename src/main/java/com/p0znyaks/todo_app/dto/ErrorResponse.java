@@ -1,17 +1,25 @@
 package com.p0znyaks.todo_app.dto;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
 import java.time.LocalDateTime;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class ErrorResponse {
-    private String title;
-    private int statusCode;
-    private String detail;
-    private LocalDateTime timestamp;
-    private String path;
+    private final String title;
+    private final int statusCode;
+    private final String detail;
+    private final LocalDateTime timestamp;
+    private final String path;
+
+    public ErrorResponse(ErrorType errorType, String path, MethodArgumentTypeMismatchException ...ex) {
+        this.title = errorType.name();
+        this.statusCode = errorType.getStatusCode();
+        this.detail = errorType.getMessage(ex);
+        this.timestamp = LocalDateTime.now();
+        this.path = path;
+    }
 }

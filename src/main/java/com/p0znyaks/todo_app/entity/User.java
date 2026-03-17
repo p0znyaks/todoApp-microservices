@@ -1,22 +1,22 @@
 package com.p0znyaks.todo_app.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Entity
 @Table(name = "Users")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
+//    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(nullable = false, unique = true)
@@ -30,13 +30,4 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private List<Task> tasks;
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", username='" + username + '\'' +
-                ", email='" + email + '\'' +
-                '}';
-    }
 }

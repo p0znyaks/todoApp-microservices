@@ -1,19 +1,26 @@
 package com.p0znyaks.todo_app.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class ValidationErrorResponse {
-    private String title;
-    private int statusCode;
-    private Map<String, String> detail;
-    private LocalDateTime timestamp;
-    private String path;
+    private final String title;
+    private final int statusCode;
+    private final Map<String, String> detail;
+    private final LocalDateTime timestamp;
+    private final String path;
+
+    public ValidationErrorResponse(ErrorType errorType, String path, MethodArgumentNotValidException ex) {
+        this.title = errorType.name();
+        this.statusCode = errorType.getStatusCode();
+        this.detail = errorType.getValidationMessage(ex);
+        this.timestamp = LocalDateTime.now();
+        this.path = path;
+    }
 }
